@@ -77,4 +77,4 @@ jobs:
           ./artifacts/win-x64/AutoTelegramBackuper.CLI-win-x64-${{ github.run_id }}-${{ github.run_attempt }}.zip
           ./artifacts/linux-x64/AutoTelegramBackuper.CLI-linux-x64-${{ github.run_id }}-${{ github.run_attempt }}.zip
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.ATB_TOKEN }}
