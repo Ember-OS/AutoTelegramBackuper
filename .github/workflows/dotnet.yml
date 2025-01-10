@@ -19,7 +19,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Setup .NET 9
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '9.x'
 
@@ -67,4 +67,14 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        name: AutoTelegramBackuper.CLI-linux-x64-${{ github.run_id }}-${{ github
+        name: AutoTelegramBackuper.CLI-linux-x64-${{ github.run_id }}-${{ github.run_attempt }}
+        path: ./artifacts/linux-x64
+
+    - name: Release to GitHub
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ./artifacts/win-x64/AutoTelegramBackuper.CLI-win-x64-${{ github.run_id }}-${{ github.run_attempt }}.zip
+          ./artifacts/linux-x64/AutoTelegramBackuper.CLI-linux-x64-${{ github.run_id }}-${{ github.run_attempt }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
