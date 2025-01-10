@@ -1,0 +1,98 @@
+name: .NET Build and Release
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        runtime: [win-x64, linux-x64]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup .NET 9
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '9.x'
+
+    - name: Restore dependencies
+      run: dotnet restore AutoTelegramBackuper.CLI/AutoTelegramBackuper.CLI.csproj
+
+    - name: Build
+      run: dotnet build AutoTelegramBackuper.CLI/AutoTelegramBackuper.CLI.csproj --configuration Release --no-restore
+
+    - name: Publish
+      run: dotnet publish AutoTelegramBackuper.CLI/AutoTelegramBackuper.CLI.csproj --configuration Release --output ./publish --runtime ${{ matrix.runtime }}
+
+    - name: Zip the build output
+      run: |
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          7z a AutoTelegramBackuper.CLI-${{ matrix.runtime }}.zip ./publish/*
+        else
+          zip -r AutoTelegramBackuper.CLI-${{ matrix.runtime }}.zip ./publish/*
+        fi
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: AutoTelegramBackuper.CLI-${{ matrix.runtime }}
+        path: AutoTelegramBackuper.CLI-${{ matrix.runtime }}.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: AutoTelegramBackuper.CLI-win-x64
+        path: ./artifacts/win-x64
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: AutoTelegramBackuper.CLI-linux-x64
+        path: ./artifacts/linux-x64
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset (Windows)
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/win-x64/AutoTelegramBackuper.CLI-win-x64.zip
+        asset_name: AutoTelegramBackuper.CLI-win-x64.zip
+        asset_content_type: application/zip
+
+    - name: Upload Release Asset (Linux)
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/linux-x64/AutoTelegramBackuper.CLI-linux-x64.zip
+        asset_name: AutoTelegramBackuper.CLI-linux-x64.zip
+        asset_content_type: application/zip
