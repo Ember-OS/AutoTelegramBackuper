@@ -43,8 +43,12 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: AutoTelegramBackuper.CLI-${{ matrix.runtime }}-${{ github.run_id }}
+        name: AutoTelegramBackuper.CLI-${{ matrix.runtime }}-${{ github.run_id }}-${{ github.run_attempt }}
         path: AutoTelegramBackuper.CLI-${{ matrix.runtime }}.zip
+        if-no-files-found: warn
+        compression-level: 6
+        overwrite: false
+        include-hidden-files: false
 
   release:
     needs: build
@@ -57,9 +61,10 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        name: AutoTelegramBackuper.CLI-win-x64-${{ github.run_id }}
+        name: AutoTelegramBackuper.CLI-win-x64-${{ github.run_id }}-${{ github.run_attempt }}
         path: ./artifacts/win-x64
 
     - name: Download artifacts
       uses: actions/download-artifact@v4
-  
+      with:
+        name: AutoTelegramBackuper.CLI-linux-x64-${{ github.run_id }}-${{ github
